@@ -26,5 +26,3 @@ extracted_news_articles_countryspes <- extracted_news_articles_countryspes %>%
   mutate(across(where(is.character), ~substr(., 1, 25)))
 
 
-extracted_news_articles_countryspes_latex <- xtable(extracted_news_articles_countryspes)
-

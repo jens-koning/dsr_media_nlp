@@ -157,6 +157,18 @@ for (i in 1:nrow(labled_data)) {
   }
 }
 
+#### Make combined dummy variables for cooperation and competition
+labled_data$coop_topic <- 0 
+labled_data$competative_topic <- 0 
+
+labled_data$coop_topic <- ifelse(labled_data$BRI_digital_coop == 1|labled_data$China_gulf_coop == 1|labled_data$China_ASEAN_rcep == 1|labled_data$China_Arab_ningxia == 1|labled_data$Central_asia_coop, 1, 0)
+labled_data$competative_topic <- ifelse(labled_data$Chinese_digital_alt == 1|labled_data$B3W_alt_BRI == 1|labled_data$BRI_dept_trap == 1|labled_data$Strategic_comp == 1|labled_data$HR_abuse_Xinjiang, 1, 0)
+
+
+DF$Den<-ifelse (DF$Denial1 < 1 | DF$Denial2 < 1 | DF$Denial3 < 1, "0", "1")
+
+
+
 #### 5. Regression Analysis #### 
 
 #Fitting binomial regression models
@@ -186,6 +198,25 @@ stargazer(mod_3_aseanmed_1, mod_3_aseanmed_2, type="text")
 stargazer(mod1, mod2, mod3, mod4, mod_5, mod_6, type="text")
 # create latex table
 latex_table <- stargazer(mod1, mod2, mod3, mod4, mod_5, mod_6)
+
+# test with compounded topics
+comp1 <- glm(competative_topic ~ US_allies_media, 
+            family = binomial, data = labled_data)
+comp2 <- glm(competative_topic ~ China_media,
+            family = binomial, data = labled_data)
+comp3 <- glm(coop_topic ~ US_allies_media, 
+            family = binomial, data = labled_data)
+comp4 <- glm(coop_topic ~ China_media,
+            family = binomial, data = labled_data)
+comp5 <- glm(competative_topic ~ ASEAN_media,
+            family = binomial, data = labled_data)
+comp6 <- glm(coop_topic ~ ASEAN_media,
+          family = binomial, data = labled_data)
+
+stargazer(comp1,comp2,comp3,comp4,comp5,comp6)
+
+
+
 
 #### 6. Making marginal effects plot ####
 library(broom)
@@ -226,4 +257,45 @@ plot <- ggplot(results, aes(x = model, y = prob, ymin = conf.low, ymax = conf.hi
   theme(panel.border = element_rect(colour = "grey60", fill=NA, size=0.5)) +
   coord_flip()
 ggsave("pred_medialoc_BRIcoop.jpg", plot, width = 20, height = 7, units = "cm")
+
+#### 7. Making marginal effects plot for compound result ####
+# Get tidy data frames of the coefficients, including confidence intervals
+tidy_mod3 <- tidy(comp3, conf.int = TRUE)
+tidy_mod4 <- tidy(comp4, conf.int = TRUE)
+tidy_mod6 <- tidy(comp6, conf.int = TRUE)
+
+
+# Add a column to indicate which model each coefficient belongs to
+tidy_mod3$model <- "US & Allies Media (Mod 3)"
+tidy_mod4$model <- "China State Media (Mod 4)"
+tidy_mod6$model <- "ASEAN Media (Mod 6)"
+
+# Combine the results into one data frame
+results <- rbind(tidy_mod3, tidy_mod4, tidy_mod6)
+
+# Filter the results to include only the terms of interest (if necessary)
+results <- results[results$term != "(Intercept)", ]
+
+# Convert the log-odds and their confidence intervals to probabilities
+results <- results %>%
+  mutate(
+    prob = exp(estimate) / (1 + exp(estimate)),
+    conf.low = exp(conf.low) / (1 + exp(conf.low)),
+    conf.high = exp(conf.high) / (1 + exp(conf.high))
+  )
+
+# Make the plot
+plot <- ggplot(results, aes(x = model, y = prob, ymin = conf.low, ymax = conf.high)) +
+  geom_errorbar(position = position_dodge(width = 0.2), width = 0.1, size = 1.2, color = "lightblue") +
+  geom_point(position = position_dodge(width = 0.2), size = 3, color = "grey60") +
+  labs(y = "Predicted Probability", x = NULL) +
+  scale_y_continuous(labels = scales::percent_format(), breaks = seq(0, 1, by = 0.25), limits = c(0, 1)) +
+  theme_minimal() +
+  theme(panel.border = element_rect(colour = "grey60", fill=NA, size=0.5)) +
+  coord_flip()
+ggsave("pred_medialoc_BRIcoop_compounded.jpg", plot, width = 20, height = 7, units = "cm")
+
+
+
+
 
