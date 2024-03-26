@@ -164,10 +164,7 @@ labled_data$competative_topic <- 0
 labled_data$coop_topic <- ifelse(labled_data$BRI_digital_coop == 1|labled_data$China_gulf_coop == 1|labled_data$China_ASEAN_rcep == 1|labled_data$China_Arab_ningxia == 1|labled_data$Central_asia_coop, 1, 0)
 labled_data$competative_topic <- ifelse(labled_data$Chinese_digital_alt == 1|labled_data$B3W_alt_BRI == 1|labled_data$BRI_dept_trap == 1|labled_data$Strategic_comp == 1|labled_data$HR_abuse_Xinjiang, 1, 0)
 
-
 DF$Den<-ifelse (DF$Denial1 < 1 | DF$Denial2 < 1 | DF$Denial3 < 1, "0", "1")
-
-
 
 #### 5. Regression Analysis #### 
 
@@ -294,6 +291,7 @@ plot <- ggplot(results, aes(x = model, y = prob, ymin = conf.low, ymax = conf.hi
   theme(panel.border = element_rect(colour = "grey60", fill=NA, size=0.5)) +
   coord_flip()
 ggsave("pred_medialoc_BRIcoop_compounded.jpg", plot, width = 20, height = 7, units = "cm")
+
 
 
 
